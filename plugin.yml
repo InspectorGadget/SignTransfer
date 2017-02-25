@@ -1,0 +1,8 @@
+name: SignTransfer
+version: 1.0.0
+api: 2.1.0
+main: RTG\SignTransfer\Loader
+author: IG
+permissions:
+    transfersign.create:
+        default: op
