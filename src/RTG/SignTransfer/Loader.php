@@ -31,6 +31,12 @@ use pocketmine\event\block\SignChangeEvent;
 use pocketmine\network\protocol\TransferPacket;
 use pocketmine\utils\Config;
 
+use pocketmine\event\player\PlayerInteractEvent;
+
+use pocketmine\utils\TextFormat as TF;
+
+use pocketmine\item\Item;
+
 class Loader extends PluginBase implements Listener {
     
     public $cfg;
@@ -67,37 +73,60 @@ class Loader extends PluginBase implements Listener {
                         $e->setCancelled();
                         $p->sendMessage("Your PORT has to be in numeric form!");
                     }
+                    else {
+                        
+                        $def = [
+                            "worldname" => $name,
+                            "ip" => $e->getLine(1),
+                            "port" => $e->getLine(2)
+                        ];
                     
-                    $p->sendMessage("Sign created!");
-                    
-                    
-                    /* Transfer Packets */
-                    
-                    $pk = new \pocketmine\network\protocol\TransferPacket();
-                    $pk->port = (int) $e->getLine(2);
-                    $pk->address = $e->getLine(1);
-                    $p->dataPacket($pk);
-                    $p->sendMessage("Executing...");
-                    
-                    $def = [
-                        "name" => $name,
-                        "x" => "0",
-                        "y" => "0",
-                        "z" => "0",
-                        "ip" => $e->getLine(1),
-                        "port" => $e->getLine(2),
-                        "enabled" => "true"
-                    ];
-                    
-                    $cfg = new Config($this->getDataFolder() . "signs.yml", Config::YAML);
-                    $cfg->setAll($def);
-                    $cfg->save();
+                        $cfg = new Config($this->getDataFolder() . "signs.yml", Config::YAML, array());
+                        $cfg->setAll($def);
+                        $cfg->save();
+                        $p->sendMessage("Sign created!");
+                        
+                    }
                     
                 }
                 else {
                     $p->sendMessage(TF::RED . "You shouldn't be using this when you've no permission to use so");
                 }
                   
+            }
+        
+    }
+    
+    public function onTap(PlayerInteractEvent $ev) {
+        
+        $p = $ev->getPlayer();
+        $item = $ev->getBlock()->getId();
+        
+            if($item === Item::SIGN or $item === Item::WALL_SIGN or $item === Item::SIGN_POST) {
+                
+                $sign = $ev->getBlock();
+                
+                    if($tile = $sign->getLevel()->getTile($sign)) {
+                        
+                        if($tile instanceof \pocketmine\tile\Sign) {
+                            
+                            if($ev->getBlock()->getX() === "0" && $ev->getBlock()->getY() === "0" && $ev->getBlock()->getZ() === "0") {
+                            
+                                if($tile->getText()[0] === strtolower("[Transfer]") or $tile->getText()[0] === strtolower("Transfer")) {
+                                
+                                        $pk = new \pocketmine\network\protocol\TransferPacket();
+                                        $pk->port = (int) $tile->getText()[2];
+                                        $pk->address = $tile->getText()[1];
+                                        $p->dataPacket($pk);
+                                        $p->sendMessage("Executing...");
+                                
+                                }
+                            }
+                        }
+                        
+                        
+                    }
+                
             }
         
     }
